@@ -83,8 +83,8 @@ class MainActivity : AppCompatActivity(), CurrencyAdapter.OnItemClickListener {
         viewModel.requestBalances()
         viewModel.requestTransactions()
 
-        if (!Utility.isNetworkAvailable(application)){
-            Toast.makeText(this,"Please check internet connection",Toast.LENGTH_SHORT).show()
+        if (!Utility.isNetworkAvailable(application)) {
+            Toast.makeText(this, "Please check internet connection", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
@@ -125,12 +125,12 @@ class MainActivity : AppCompatActivity(), CurrencyAdapter.OnItemClickListener {
             dialog.show()
         }
 
-        viewModel.enableButton.observe(this){
-            binding.btnConvert.isEnabled=it
+        viewModel.enableButton.observe(this) {
+            binding.btnConvert.isEnabled = it
         }
 
-        viewModel.displayTransactions.observe(this){
-
+        viewModel.displayTransactions.observe(this) {
+            transactionsAdapter.setData(it)
         }
     }
 

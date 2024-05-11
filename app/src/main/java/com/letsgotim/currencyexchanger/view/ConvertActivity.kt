@@ -32,6 +32,8 @@ class ConvertActivity : AppCompatActivity() {
     private var remainingBalance = 0.0
     private var commissionFee = 0.0
     private var disableSubmit = true
+    private var sellAmount = 0.0
+    private var hasCommissionFee = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,13 +54,15 @@ class ConvertActivity : AppCompatActivity() {
     private fun init() {
         viewModelFactory = ConvertViewModelFactory(
             application,
-            currency
+            currency,
+            "EUR"
         )
 
 
         viewModel = ViewModelProvider(this, viewModelFactory)[ConvertViewModel::class.java]
         viewModel.requestCurrencyDetails()
         viewModel.requestRemainingBalance()
+        viewModel.requestTransactionCount()
 
         binding.btnSubmit.isEnabled = false
 
@@ -67,7 +71,10 @@ class ConvertActivity : AppCompatActivity() {
                 if (s.toString() == "") {
                     remainingBalance = balance
                     convertedAmount = 0.0
+                    sellAmount = 0.0
+                    commissionFee = 0.0
                     binding.btnSubmit.isEnabled = false
+                    binding.tvCommisionFee.text = "Commission Fee: 0.0 EUR"
                 } else {
                     if (s.toString().toDouble() > balance) {
                         binding.etAmount.setTextColor(
@@ -88,9 +95,16 @@ class ConvertActivity : AppCompatActivity() {
                             )
                         )
 
-                        remainingBalance = balance - s.toString().toDouble()!!
-                        convertedAmount = amount * s.toString().toDouble()
+                        sellAmount = s.toString().toDouble()
+                        remainingBalance = balance - sellAmount
+                        convertedAmount = amount * sellAmount
                         binding.btnSubmit.isEnabled = true
+
+                        if (hasCommissionFee) {
+                            commissionFee = sellAmount * 0.07
+                            binding.tvCommisionFee.text =
+                                "Commission Fee: ${Utility.getCurrencyFormat(commissionFee)} EUR"
+                        }
                     }
 
                 }
@@ -117,6 +131,7 @@ class ConvertActivity : AppCompatActivity() {
                 "Yes"
             ) { dialogInterface, _ ->
                 viewModel.requestSubmit(
+                    sellAmount,
                     remainingBalance,
                     convertedAmount,
                     commissionFee
@@ -134,6 +149,7 @@ class ConvertActivity : AppCompatActivity() {
 
     }
 
+
     private fun viewModelResponse() {
         viewModel.displayCurrencyDetails.observe(this) {
             amount = it.amount!!
@@ -146,9 +162,26 @@ class ConvertActivity : AppCompatActivity() {
                 "Remaining balance : ${Utility.getCurrencyFormat(it.balance!!)} EUR"
         }
 
-        viewModel.finishActivity.observe(this){
-            finish()
+
+
+        viewModel.hasCommissionFee.observe(this) {
+            hasCommissionFee = it
+        }
+
+        viewModel.showAlertDialog.observe(this) {
+            val alertDialog = AlertDialog.Builder(this)
+            alertDialog.setTitle("Currency converted")
+            alertDialog.setMessage(it)
+            alertDialog.setPositiveButton(
+                "Done"
+            ) { dialogInterface, _ ->
+                finish()
+                dialogInterface.dismiss()
+            }
+
+            alertDialog.show()
         }
     }
+
 
 }

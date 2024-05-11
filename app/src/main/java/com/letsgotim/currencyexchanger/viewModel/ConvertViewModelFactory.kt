@@ -6,12 +6,13 @@ import androidx.lifecycle.ViewModelProvider
 
 class ConvertViewModelFactory(
     private val context: Context,
-    private val currency: String
+    private val currency: String,
+    private val baseCurrency: String
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ConvertViewModel::class.java)) {
-            return ConvertViewModel(context,currency) as T
+            return ConvertViewModel(context,currency,baseCurrency) as T
         }
         throw java.lang.IllegalArgumentException("Unknown View Model Class")
     }

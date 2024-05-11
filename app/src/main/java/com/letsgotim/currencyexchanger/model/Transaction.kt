@@ -8,8 +8,12 @@ import androidx.room.PrimaryKey
 class Transaction(
     @PrimaryKey (autoGenerate = true) @ColumnInfo(name = "id") val id: Int,
     @ColumnInfo(name = "balance") val balance: Double?,
+    @ColumnInfo(name = "base_currency") val baseCurrency: String?,
+    @ColumnInfo(name = "sell_amount") val sellAmount: Double?,
+
     @ColumnInfo(name = "currency") val currency: String?,
     @ColumnInfo(name = "converted_amount") val convertedAmount: Double?,
+
     @ColumnInfo(name = "commission_fee") val commissionFee: Double?,
     @ColumnInfo(name = "date_entry") val dateEntry: String?
 

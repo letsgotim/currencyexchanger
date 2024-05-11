@@ -25,22 +25,24 @@ import java.util.TimerTask
 
 class ConvertViewModel(
     context: Context,
-    currency: String
+    currency: String,
+    baseCurrency: String,
 ) : ViewModel() {
 
     private val context: Context
     private val currency: String
+    private val baseCurrency: String
 
     init {
         this.context = context
         this.currency = currency
+        this.baseCurrency = baseCurrency
     }
 
-    val showToastMessage = MutableLiveData<String>()
     val displayCurrencyDetails = MutableLiveData<Currency>()
     val displayRemainingBalance = MutableLiveData<Balance>()
-    val finishActivity = MutableLiveData<Boolean>()
-
+    val hasCommissionFee = MutableLiveData<Boolean>()
+    val showAlertDialog = MutableLiveData<String>()
 
     fun requestCurrencyDetails() {
         CoroutineScope(Dispatchers.IO).launch {
@@ -64,6 +66,7 @@ class ConvertViewModel(
     }
 
     fun requestSubmit(
+        sellAmount: Double,
         remainingBalance: Double,
         convertedAmount: Double,
         commissionFee: Double
@@ -82,6 +85,8 @@ class ConvertViewModel(
             val data = Transaction(
                 id,
                 remainingBalance,
+                baseCurrency,
+                sellAmount,
                 currency,
                 convertedAmount,
                 commissionFee,
@@ -99,13 +104,26 @@ class ConvertViewModel(
 //            )
 //            Db.get(context).getBalanceDao().insertData(balData)
 
-            Db.get(context).getBalanceDao().updateBalance(remainingBalance,"EUR")
+            Db.get(context).getBalanceDao().updateBalance(remainingBalance, "EUR")
 
-            withContext(Dispatchers.Main){
-                finishActivity.value = true
+            withContext(Dispatchers.Main) {
+                showAlertDialog.value  = "You have converted $sellAmount $baseCurrency to ${Utility.getCurrencyFormat(convertedAmount)} $currency. " +
+                        "Commission Fee: ${Utility.getCurrencyFormat(commissionFee)} $baseCurrency"
             }
         }
 
+    }
+
+    fun requestTransactionCount() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = Db.get(context).getTransactionDao().getAllData().size
+
+            withContext(Dispatchers.Main) {
+                if (data >= 5) {
+                    hasCommissionFee.value = true
+                }
+            }
+        }
     }
 
 }

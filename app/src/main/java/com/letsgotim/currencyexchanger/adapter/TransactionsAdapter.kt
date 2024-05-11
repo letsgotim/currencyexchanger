@@ -16,7 +16,7 @@ import com.letsgotim.currencyexchanger.model.Transaction
 
 class TransactionsAdapter(
     private val context: Context
-    ) :
+) :
     RecyclerView.Adapter<TransactionsAdapter.ViewHolder>() {
 
     private var list: List<Transaction> = ArrayList()
@@ -40,6 +40,12 @@ class TransactionsAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
+        holder.binding.tvAmountSell.text = Utility.getCurrencyFormat(list[position].sellAmount!!)
+        holder.binding.tvCurrencySell.text = list[position].baseCurrency
+
+        holder.binding.tvAmountReceive.text =
+            "+${Utility.getCurrencyFormat(list[position].convertedAmount!!)}"
+        holder.binding.tvCurrencyReceive.text = list[position].currency
 
 
 //        holder.binding.lltContainer.setOnClickListener {
@@ -51,7 +57,6 @@ class TransactionsAdapter(
     override fun getItemCount(): Int {
         return list.size
     }
-
 
 
 }
