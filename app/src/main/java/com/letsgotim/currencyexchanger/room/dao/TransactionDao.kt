@@ -15,7 +15,7 @@ interface TransactionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertData(data: Transaction)
 
-    @Query("SELECT * FROM transaction_tbl")
+    @Query("SELECT * FROM transaction_tbl ORDER BY date_entry DESC")
     fun getAllData(): List<Transaction>
 
     @Query("SELECT * FROM transaction_tbl WHERE id = :id")

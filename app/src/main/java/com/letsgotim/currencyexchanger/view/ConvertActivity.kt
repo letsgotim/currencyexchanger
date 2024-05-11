@@ -95,15 +95,43 @@ class ConvertActivity : AppCompatActivity() {
                             )
                         )
 
+                        binding.btnSubmit.isEnabled = true
+
                         sellAmount = s.toString().toDouble()
                         remainingBalance = balance - sellAmount
                         convertedAmount = amount * sellAmount
-                        binding.btnSubmit.isEnabled = true
 
                         if (hasCommissionFee) {
                             commissionFee = sellAmount * 0.07
                             binding.tvCommisionFee.text =
                                 "Commission Fee: ${Utility.getCurrencyFormat(commissionFee)} EUR"
+                            remainingBalance -= commissionFee
+
+                            if (remainingBalance <= 0.0){
+                                binding.etAmount.setTextColor(
+                                    ContextCompat.getColor(
+                                        applicationContext,
+                                        R.color.pink
+                                    )
+                                )
+
+                                binding.tvAmount.text = "0.0 $currency"
+                                binding.btnSubmit.isEnabled = false
+                            }else{
+                                binding.etAmount.setTextColor(
+                                    ContextCompat.getColor(
+                                        applicationContext,
+                                        R.color.black
+                                    )
+                                )
+
+                                binding.btnSubmit.isEnabled = true
+
+                                sellAmount = s.toString().toDouble()
+                                remainingBalance = balance - sellAmount
+                                remainingBalance -= commissionFee
+                                convertedAmount = amount * sellAmount
+                            }
                         }
                     }
 

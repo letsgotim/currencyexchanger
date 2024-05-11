@@ -95,19 +95,31 @@ class ConvertViewModel(
 
             Db.get(context).getTransactionDao().insertData(data)
 
-//            val balId =    Db.get(context).getBalanceDao().getLatestData().id+1
-//            val balData = Balance(
-//                balId,
-//                convertedAmount,
-//                currency,
-//                Utility.get24HourDateTime(Utility.getFormatedDateTimeAmPm())!!
-//            )
-//            Db.get(context).getBalanceDao().insertData(balData)
+            val checkExistingCurrency = Db.get(context).getBalanceDao().getDataByCurrency(currency)
+            val balId = Db.get(context).getBalanceDao().getLatestData().id + 1
 
-            Db.get(context).getBalanceDao().updateBalance(remainingBalance, "EUR")
+            if (checkExistingCurrency == null) {
+                val balData = Balance(
+                    balId,
+                    convertedAmount,
+                    currency,
+                    Utility.get24HourDateTime(Utility.getFormatedDateTimeAmPm())!!
+                )
+                Db.get(context).getBalanceDao().insertData(balData)
+            } else {
+                Db.get(context).getBalanceDao()
+                    .updateBalance(checkExistingCurrency.balance!! + convertedAmount, currency)
+            }
+
+            Db.get(context).getBalanceDao().updateBalance(remainingBalance, baseCurrency)
+
+
+//            Db.get(context).getBalanceDao().updateBalance(remainingBalance, "EUR")
 
             withContext(Dispatchers.Main) {
-                showAlertDialog.value  = "You have converted $sellAmount $baseCurrency to ${Utility.getCurrencyFormat(convertedAmount)} $currency. " +
+                showAlertDialog.value = "You have converted $sellAmount $baseCurrency to ${
+                    Utility.getCurrencyFormat(convertedAmount)
+                } $currency. " +
                         "Commission Fee: ${Utility.getCurrencyFormat(commissionFee)} $baseCurrency"
             }
         }
