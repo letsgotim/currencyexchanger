@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity(), CurrencyAdapter.OnItemClickListener {
 
         viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         viewModel.getCurrencyApi()
-
+        viewModel.setDefaultSettings()
 
         binding.btnConvert.isEnabled = false
 

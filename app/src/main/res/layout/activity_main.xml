@@ -14,7 +14,7 @@
         <TextView
             android:fontFamily="@font/roboto_black"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="70dp"
             android:background="@color/blue"
             android:gravity="center"
             android:text="Currency converter"
@@ -57,12 +57,14 @@
     </LinearLayout>
 
     <Button
+        android:layout_marginBottom="10dp"
+    android:background="@drawable/btn_round_corner"
         android:id="@+id/btn_convert"
         android:text="Convert"
         android:layout_marginRight="5dp"
         android:layout_marginLeft="5dp"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
-        android:layout_height="70dp"/>
+        android:layout_height="50dp"/>
 
 </RelativeLayout>

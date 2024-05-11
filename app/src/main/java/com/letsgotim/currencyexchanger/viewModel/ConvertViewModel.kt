@@ -1,6 +1,7 @@
 package com.letsgotim.currencyexchanger.viewModel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.room.ColumnInfo
@@ -43,6 +44,7 @@ class ConvertViewModel(
     val displayRemainingBalance = MutableLiveData<Balance>()
     val hasCommissionFee = MutableLiveData<Boolean>()
     val showAlertDialog = MutableLiveData<String>()
+    val returnTransactionAmountLimit = MutableLiveData<Double>()
 
     fun requestCurrencyDetails() {
         CoroutineScope(Dispatchers.IO).launch {
@@ -73,6 +75,8 @@ class ConvertViewModel(
     ) {
 
         CoroutineScope(Dispatchers.IO).launch {
+            val settings = Db.get(context).getSettingsDao().getData()
+
             var id = 0
 
             val check = Db.get(context).getTransactionDao().getAllData().size
@@ -82,14 +86,21 @@ class ConvertViewModel(
                 id = Db.get(context).getTransactionDao().getLatestData().id + 1
             }
 
+            var finalComFee = 0.0
+            if (sellAmount >= settings.freeConversionAmount!!) {
+                finalComFee = 0.0
+            } else {
+                finalComFee = commissionFee
+            }
+
             val data = Transaction(
                 id,
-                remainingBalance,
+                remainingBalance - finalComFee,
                 baseCurrency,
                 sellAmount,
                 currency,
                 convertedAmount,
-                commissionFee,
+                finalComFee,
                 Utility.get24HourDateTime(Utility.getFormatedDateTimeAmPm())!!
             )
 
@@ -111,16 +122,14 @@ class ConvertViewModel(
                     .updateBalance(checkExistingCurrency.balance!! + convertedAmount, currency)
             }
 
-            Db.get(context).getBalanceDao().updateBalance(remainingBalance, baseCurrency)
-
-
-//            Db.get(context).getBalanceDao().updateBalance(remainingBalance, "EUR")
+            Db.get(context).getBalanceDao()
+                .updateBalance(remainingBalance - finalComFee, baseCurrency)
 
             withContext(Dispatchers.Main) {
                 showAlertDialog.value = "You have converted $sellAmount $baseCurrency to ${
                     Utility.getCurrencyFormat(convertedAmount)
                 } $currency. " +
-                        "Commission Fee: ${Utility.getCurrencyFormat(commissionFee)} $baseCurrency"
+                        "Commission Fee: ${Utility.getCurrencyFormat(finalComFee)} $baseCurrency"
             }
         }
 
@@ -128,12 +137,31 @@ class ConvertViewModel(
 
     fun requestTransactionCount() {
         CoroutineScope(Dispatchers.IO).launch {
-            val data = Db.get(context).getTransactionDao().getAllData().size
+            val transactions = Db.get(context).getTransactionDao().getAllData().size
+            val settings = Db.get(context).getSettingsDao().getData()
 
             withContext(Dispatchers.Main) {
-                if (data >= 5) {
+                if (transactions >= 5) {
                     hasCommissionFee.value = true
+
+                    val result: Double =
+                        settings.freeConversionTransaction!!.toDouble() / (transactions + 1)
+
+                    if (Utility.isWholeNumber(result)) {
+                        hasCommissionFee.value = false
+                    }
                 }
+
+            }
+        }
+    }
+
+    fun requestTransactionAmountLimit() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = Db.get(context).getSettingsDao().getData()
+
+            withContext(Dispatchers.Main) {
+                returnTransactionAmountLimit.value = data.freeConversionAmount
             }
         }
     }

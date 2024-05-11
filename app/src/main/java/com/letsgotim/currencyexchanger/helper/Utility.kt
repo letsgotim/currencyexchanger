@@ -47,4 +47,11 @@ object Utility {
         return sdf.format(Date())
     }
 
+    fun isWholeNumber(number : Double) : Boolean{
+        return number.rem(1).equals(0.0)
+    }
+
+
+
+
 }

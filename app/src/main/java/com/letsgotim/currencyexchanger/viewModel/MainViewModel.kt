@@ -9,6 +9,7 @@ import com.letsgotim.currencyexchanger.helper.RetrofitBuilder
 import com.letsgotim.currencyexchanger.helper.Utility
 import com.letsgotim.currencyexchanger.model.Balance
 import com.letsgotim.currencyexchanger.model.Currency
+import com.letsgotim.currencyexchanger.model.Settings
 import com.letsgotim.currencyexchanger.model.Transaction
 import com.letsgotim.currencyexchanger.model.currencyResponse.ApiData
 import com.letsgotim.currencyexchanger.network.GetCurrency
@@ -128,6 +129,22 @@ class MainViewModel(context: Context) : ViewModel() {
 
             withContext(Dispatchers.Main){
                 displayTransactions.value=data
+            }
+        }
+    }
+
+    fun setDefaultSettings() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = Db.get(context).getTransactionDao().getAllData()
+
+            if (data.isEmpty()){
+                Db.get(context).getSettingsDao().insertData(
+                    Settings(
+                        1,
+                        10,
+                        200.0
+                    )
+                )
             }
         }
     }

@@ -2,11 +2,7 @@ package com.letsgotim.currencyexchanger.view
 
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.Context
-import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.appcompat.app.AppCompatActivity
@@ -34,6 +30,7 @@ class ConvertActivity : AppCompatActivity() {
     private var disableSubmit = true
     private var sellAmount = 0.0
     private var hasCommissionFee = false
+    private var transactionAmountLimit = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +60,7 @@ class ConvertActivity : AppCompatActivity() {
         viewModel.requestCurrencyDetails()
         viewModel.requestRemainingBalance()
         viewModel.requestTransactionCount()
+        viewModel.requestTransactionAmountLimit()
 
         binding.btnSubmit.isEnabled = false
 
@@ -73,72 +71,62 @@ class ConvertActivity : AppCompatActivity() {
                     convertedAmount = 0.0
                     sellAmount = 0.0
                     commissionFee = 0.0
-                    binding.btnSubmit.isEnabled = false
-                    binding.tvCommisionFee.text = "Commission Fee: 0.0 EUR"
-                } else {
-                    if (s.toString().toDouble() > balance) {
-                        binding.etAmount.setTextColor(
-                            ContextCompat.getColor(
-                                applicationContext,
-                                R.color.pink
-                            )
-                        )
 
-                        binding.tvAmount.text = "0.0 $currency"
+                    setTextCommission("Commission Fee: 0.0 EUR")
+                    enableSubmitButton(false)
+
+                } else {
+                    sellAmount = s.toString().toDouble()
+
+                    if (sellAmount > balance) {
+                        changeEditTextColor(false)
+                        enableSubmitButton(false)
+                        setTextAmount("0.0 $currency")
+
                         binding.btnSubmit.isEnabled = false
 
                     } else {
-                        binding.etAmount.setTextColor(
-                            ContextCompat.getColor(
-                                applicationContext,
-                                R.color.black
-                            )
-                        )
+                        changeEditTextColor(true)
+                        enableSubmitButton(true)
 
-                        binding.btnSubmit.isEnabled = true
-
-                        sellAmount = s.toString().toDouble()
                         remainingBalance = balance - sellAmount
                         convertedAmount = amount * sellAmount
 
                         if (hasCommissionFee) {
                             commissionFee = sellAmount * 0.07
-                            binding.tvCommisionFee.text =
-                                "Commission Fee: ${Utility.getCurrencyFormat(commissionFee)} EUR"
-                            remainingBalance -= commissionFee
 
-                            if (remainingBalance <= 0.0){
-                                binding.etAmount.setTextColor(
-                                    ContextCompat.getColor(
-                                        applicationContext,
-                                        R.color.pink
+                            setTextCommission(
+                                "Commission Fee: ${
+                                    Utility.getCurrencyFormat(
+                                        commissionFee
                                     )
-                                )
+                                } EUR"
+                            )
 
-                                binding.tvAmount.text = "0.0 $currency"
-                                binding.btnSubmit.isEnabled = false
-                            }else{
-                                binding.etAmount.setTextColor(
-                                    ContextCompat.getColor(
-                                        applicationContext,
-                                        R.color.black
-                                    )
-                                )
+                            if (remainingBalance <= 0.0) {
+                                changeEditTextColor(false)
+                                enableSubmitButton(false)
+                                setTextAmount("0.0 $currency")
 
-                                binding.btnSubmit.isEnabled = true
+                            } else {
+                                changeEditTextColor(true)
+                                enableSubmitButton(true)
 
-                                sellAmount = s.toString().toDouble()
                                 remainingBalance = balance - sellAmount
-                                remainingBalance -= commissionFee
                                 convertedAmount = amount * sellAmount
                             }
+
+                            if (sellAmount >= transactionAmountLimit){
+                                setTextCommission("Commission Fee: 0.0 EUR")
+                            }
+                        } else {
+                            setTextCommission("Commission Fee: 0.0 EUR")
                         }
                     }
 
                 }
 
-                binding.tvAmount.text =
-                    "" + Utility.getCurrencyFormat(convertedAmount) + " " + currency
+                setTextAmount("" + Utility.getCurrencyFormat(convertedAmount) + " " + currency)
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -177,6 +165,36 @@ class ConvertActivity : AppCompatActivity() {
 
     }
 
+    private fun setTextCommission(str: String) {
+        binding.tvCommisionFee.text = str
+    }
+
+    private fun setTextAmount(str: String) {
+        binding.tvAmount.text = str
+    }
+
+    private fun enableSubmitButton(bool: Boolean) {
+        binding.btnSubmit.isEnabled = bool
+    }
+
+    private fun changeEditTextColor(bool: Boolean) {
+        if (bool) {
+            binding.etAmount.setTextColor(
+                ContextCompat.getColor(
+                    applicationContext,
+                    R.color.black
+                )
+            )
+        } else {
+            binding.etAmount.setTextColor(
+                ContextCompat.getColor(
+                    applicationContext,
+                    R.color.pink
+                )
+            )
+        }
+    }
+
 
     private fun viewModelResponse() {
         viewModel.displayCurrencyDetails.observe(this) {
@@ -208,6 +226,9 @@ class ConvertActivity : AppCompatActivity() {
             }
 
             alertDialog.show()
+        }
+        viewModel.returnTransactionAmountLimit.observe(this){
+            transactionAmountLimit = it
         }
     }
 
