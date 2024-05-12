@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.letsgotim.currencyexchanger.R
 import com.letsgotim.currencyexchanger.databinding.ActivityConvertBinding
 import com.letsgotim.currencyexchanger.helper.Utility
+import com.letsgotim.currencyexchanger.model.Submit
 import com.letsgotim.currencyexchanger.viewModel.ConvertViewModel
 import com.letsgotim.currencyexchanger.viewModel.ConvertViewModelFactory
 
@@ -93,7 +94,7 @@ class ConvertActivity : AppCompatActivity() {
                         convertedAmount = amount * sellAmount
 
                         if (hasCommissionFee) {
-                            commissionFee = sellAmount * 0.07
+                            commissionFee = sellAmount * 0.007
 
                             setTextCommission(
                                 "Commission Fee: ${
@@ -146,11 +147,14 @@ class ConvertActivity : AppCompatActivity() {
             alertDialog.setPositiveButton(
                 "Yes"
             ) { dialogInterface, _ ->
-                viewModel.requestSubmit(
+                val data = Submit(
                     sellAmount,
                     remainingBalance,
                     convertedAmount,
                     commissionFee
+                )
+                viewModel.requestSubmit(
+                    data
                 )
                 dialogInterface.dismiss()
             }
@@ -217,6 +221,7 @@ class ConvertActivity : AppCompatActivity() {
         viewModel.showAlertDialog.observe(this) {
             val alertDialog = AlertDialog.Builder(this)
             alertDialog.setTitle("Currency converted")
+            alertDialog.setCancelable(false)
             alertDialog.setMessage(it)
             alertDialog.setPositiveButton(
                 "Done"

@@ -10,6 +10,7 @@ import com.letsgotim.currencyexchanger.helper.RetrofitBuilder
 import com.letsgotim.currencyexchanger.helper.Utility
 import com.letsgotim.currencyexchanger.model.Balance
 import com.letsgotim.currencyexchanger.model.Currency
+import com.letsgotim.currencyexchanger.model.Submit
 import com.letsgotim.currencyexchanger.model.Transaction
 import com.letsgotim.currencyexchanger.model.currencyResponse.ApiData
 import com.letsgotim.currencyexchanger.network.GetCurrency
@@ -67,12 +68,7 @@ class ConvertViewModel(
         }
     }
 
-    fun requestSubmit(
-        sellAmount: Double,
-        remainingBalance: Double,
-        convertedAmount: Double,
-        commissionFee: Double
-    ) {
+    fun requestSubmit(submit: Submit) {
 
         CoroutineScope(Dispatchers.IO).launch {
             val settings = Db.get(context).getSettingsDao().getData()
@@ -87,19 +83,19 @@ class ConvertViewModel(
             }
 
             var finalComFee = 0.0
-            if (sellAmount >= settings.freeConversionAmount!!) {
+            if (submit.sellAmount >= settings.freeConversionAmount!!) {
                 finalComFee = 0.0
             } else {
-                finalComFee = commissionFee
+                finalComFee = submit.commissionFee
             }
 
             val data = Transaction(
                 id,
-                remainingBalance - finalComFee,
+                submit.remainingBalance - finalComFee,
                 baseCurrency,
-                sellAmount,
+                submit.sellAmount,
                 currency,
-                convertedAmount,
+                submit.convertedAmount,
                 finalComFee,
                 Utility.get24HourDateTime(Utility.getFormatedDateTimeAmPm())!!
             )
@@ -112,22 +108,25 @@ class ConvertViewModel(
             if (checkExistingCurrency == null) {
                 val balData = Balance(
                     balId,
-                    convertedAmount,
+                    data.convertedAmount,
                     currency,
                     Utility.get24HourDateTime(Utility.getFormatedDateTimeAmPm())!!
                 )
                 Db.get(context).getBalanceDao().insertData(balData)
             } else {
                 Db.get(context).getBalanceDao()
-                    .updateBalance(checkExistingCurrency.balance!! + convertedAmount, currency)
+                    .updateBalance(
+                        checkExistingCurrency.balance!! + data.convertedAmount!!,
+                        currency
+                    )
             }
 
             Db.get(context).getBalanceDao()
-                .updateBalance(remainingBalance - finalComFee, baseCurrency)
+                .updateBalance(submit.remainingBalance - finalComFee, baseCurrency)
 
             withContext(Dispatchers.Main) {
-                showAlertDialog.value = "You have converted $sellAmount $baseCurrency to ${
-                    Utility.getCurrencyFormat(convertedAmount)
+                showAlertDialog.value = "You have converted ${data.sellAmount} $baseCurrency to ${
+                    Utility.getCurrencyFormat(data.convertedAmount!!)
                 } $currency. " +
                         "Commission Fee: ${Utility.getCurrencyFormat(finalComFee)} $baseCurrency"
             }
